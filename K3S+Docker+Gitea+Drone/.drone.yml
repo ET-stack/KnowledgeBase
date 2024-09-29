@@ -1,0 +1,51 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  # 第一步：构建 Go 应用
+  - name: build
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/golang:1.22.5  # 使用官方的 Go 镜像
+    commands:
+      - go build -o cicd-test-go ./main.go  # 编译 Go 应用，生成可执行文件
+
+  # 第二步：构建 Docker 镜像并推送
+  - name: docker
+    environment:
+      USERNAME:
+        from_secret: docker_username
+      PASSWORD:
+        from_secret: docker_password
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/plugins/docker:latest  # 使用 Docker 插件镜像
+    commands:
+    - docker login -u $USERNAME -p $PASSWORD registry.cn-hangzhou.aliyuncs.com
+    - docker build -f Dockerfile -t registry.cn-hangzhou.aliyuncs.com/a2/cicd-test-go:${DRONE_BUILD_NUMBER} .
+    - docker push registry.cn-hangzhou.aliyuncs.com/a2/cicd-test-go:${DRONE_BUILD_NUMBER}
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock  # 正确的挂载路径
+    # 第三步：部署到 Kubernetes
+  - name: deploy to k8s
+    image: alpine
+    environment:
+      KUBECONFIG: /root/.kube/kubeconfig  # 替换为实际的 kubeconfig 路径
+    commands:
+      - kubectl apply -f deployment.yaml
+    volumes:
+      - name: kubeconfig
+        path: /root/.kube/kubeconfig  # 容器内的路径
+      - name: kubectl
+        path: /usr/local/bin/kubectl  # 确保挂载了 kubectl  
+volumes:
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock  # 定义全局挂载卷
+  - name: k3s
+    host:
+      path: /var/lib/rancher/k3s
+  - name: kubeconfig
+    host:
+      path: /root/.kube/kubeconfig
+  - name: kubectl
+    host:
+      path: /usr/local/bin/kubectl  # 确保挂载了 kubectl      
