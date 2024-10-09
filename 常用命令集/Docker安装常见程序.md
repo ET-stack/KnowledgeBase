@@ -33,6 +33,20 @@ sudo systemctl restart docker
 
 ```
 
+### 安装docker-compose
+
+```
+cd /usr/local/bin/
+
+wget https://gitee.com/xiaofei002/LinuxFile/blob/master/docker/docker-compose
+
+chmod +x /usr/local/bin/docker-compose
+
+ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+docker-compose --version
+```
+
 
 
 ### **docker安装镜像**

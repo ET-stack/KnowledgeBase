@@ -75,14 +75,14 @@ sudo systemctl daemon-reload && sudo systemctl restart docker
 
 ```
   docker run \
-  --volume=/var/lib/drone:/data \
+  --volume=/var/run/docker.sock:/var/run/docker.sock \
   --env=DRONE_GITEA_SERVER=http://192.168.8.177:3000 \
   --env=DRONE_GITEA_CLIENT_ID=e3c498aa-678e-4a08-8776-1683539c1fa5 \
   --env=DRONE_GITEA_CLIENT_SECRET=gto_z4ncgbhrg6pq5md7q652jw7d2qs2mcudrd5nz7xw4xl4gmlvsquq \
   --env=DRONE_RPC_SECRET=5e73accfc0ebcb83a6ce999ec6000b33 \
   --env=DRONE_SERVER_HOST=192.168.10.32:3080 \
   --env=DRONE_SERVER_PROTO=http \
-  --env=DRONE_USER_CREATE=username:root:root.,admin@yourdomain.com:true \
+  --env=DRONE_USER_CREATE=username:root,admin:true \
   --publish=3080:80 \
   --publish=443:443 \
   --restart=always \
