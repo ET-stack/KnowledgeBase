@@ -1,0 +1,35 @@
+version: "3.0"
+services:
+  elastic:
+    container_name: es-app
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.elastic.co/elasticsearch/elasticsearch:8.14.2
+    # build: .
+    environment:
+      - xpack.security.enabled=false
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ELASTIC_USERNAME=elastic
+      - ELASTIC_PASSWORD=test
+    volumes:
+      - "/root/es/elastic/data:/usr/share/elasticsearch/data"
+      - "/root/es/logs:/usr/share/elasticsearch/logs"
+    restart: always
+    networks:
+      - esnet
+    ports:
+      - 9200:9200
+  kibana:
+    container_name: kibana-app
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/kibana:8.14.3
+    restart: always
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es-app:9200
+    networks:
+      - esnet
+    depends_on:
+      - elastic
+    ports:
+      - 5601:5601
+networks:
+  esnet:
+    driver: bridge

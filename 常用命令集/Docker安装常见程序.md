@@ -86,11 +86,12 @@ docker run -p 9000:9000 -p 9001:9001 --name myMinio -d -e "MINIO_ACCESS_KEY=admi
 docker pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.elastic.co/elasticsearch/elasticsearch:8.14.2
 docker tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.elastic.co/elasticsearch/elasticsearch:8.14.2  docker.elastic.co/elasticsearch/elasticsearch:8.14.2
 
-docker run --name some-elasticsearch -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -d docker.elastic.co/elasticsearch/elasticsearch:8.14.2
+docker run --name some-elasticsearch -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node"  -e xpack.security.enabled=false  -d docker.elastic.co/elasticsearch/elasticsearch:8.14.2
 
-docker run --name elasticsearch -p 9200:9200 -p 9300:9300 \
+docker run --name some-elasticsearch -p 9200:9200 -p 9300:9300 \
   -v ./elasticsearch/data:/usr/share/elasticsearch/data \
   -e "discovery.type=single-node" \
+  -e xpack.security.enabled=false \
   -d docker.elastic.co/elasticsearch/elasticsearch:8.14.2
 ```
 
@@ -108,5 +109,45 @@ docker run -d  --name some-rabbit -v ./rabbitmq/data:/var/lib/rabbitmq -p 5672:5
 
 默认账户：guest
 密码：guest
+```
+
+dockercompose
+
+```
+version: "3.0"
+services:
+  elastic:
+    container_name: es-app
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.elastic.co/elasticsearch/elasticsearch:8.14.2
+    # build: .
+    environment:
+      - xpack.security.enabled=false
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ELASTIC_USERNAME=elastic
+      - ELASTIC_PASSWORD=test
+    volumes:
+      - "D:/elastic/data:/usr/share/elasticsearch/data"
+      - "D:/elastic/logs:/usr/share/elasticsearch/logs"
+    restart: always
+    networks:
+      - esnet
+    ports:
+      - 9200:9200
+  kibana:
+    container_name: kibana-app
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/kibana:8.14.3
+    restart: always
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es-app:9200
+    networks:
+      - esnet
+    depends_on:
+      - elastic
+    ports:
+      - 5601:5601
+networks:
+  esnet:
+    driver: bridge
 ```
 
